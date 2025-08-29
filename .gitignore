@@ -1,0 +1,13 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+colt/.env
+/colt/memories/meet_the_robinsons
+/colt/memories/users
+/colt/memories/__pycache__
+/colt/__pycache__
+/colt/.idea
+/colt/images
+colt/memories/__consent_users.json
+colt/memories/__things_you_know.json
