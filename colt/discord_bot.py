@@ -9,7 +9,8 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from colt45 import COLT_Create, COLT_Message
+import channel_chat_history as chat_cache
+from colt45 import COLT_Create, COLT_Message, colt_current_session_chat_cache
 
 # Load Env
 load_dotenv()
@@ -33,13 +34,10 @@ intents.message_content = True
 intents.emojis = True
 intents.emojis_and_stickers = True
 
-activity_status = bc.command_set_activity()
-
 command_prefix = "M! "
 client = commands.Bot(
     command_prefix=command_prefix,
     intents=intents,
-    activity=activity_status,
     status=discord.Status.online
 )
 
@@ -127,7 +125,25 @@ async def on_message(message):
         return
     
     await client.process_commands(message)
+
+    channel = client.get_channel(message.channel.id)
+    # Load last 30 if empty
+    if not colt_current_session_chat_cache:
+        await chat_cache.load_initial_messages(channel, colt_current_session_chat_cache)
+    else:
+        # Only add new if cache already exists
+        chat_cache.add_new_message(message, colt_current_session_chat_cache)
+
+    # Debug print
+    # chat_cache.print_cache(colt_current_session_chat_cache)
+
     message_content = message.content
+    username = message.author.name
+    user_nickname = message.author.display_name
+
+    for user in message.mentions:
+        message_content = message_content.replace(f"<@{user.id}>", f"@{user.name}")
+        message_content = message_content.replace(f"<@!{user.id}>", f"@{user.name}")
 
     if message.mention_everyone:
         return
@@ -136,18 +152,11 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    username = message.author.name
-    user_nickname = message.author.display_name
-
     # DMs
     if isinstance(message.channel, discord.DMChannel):
         # print(f"{message_content}")
         await llm_chat(message, username, user_nickname, message_content)
         return
-
-    for user in message.mentions:
-        message_content = message_content.replace(f"<@{user.id}>", f"@{user.name}")
-        message_content = message_content.replace(f"<@!{user.id}>", f"@{user.name}")
 
     # replying to bot directly
     if message.reference:

@@ -2,6 +2,7 @@ import asyncio
 import sys
 
 from ollama import Client, chat
+from collections import deque
 
 from colt45_ruleset import COLT_personality
 from utility_scripts.system_logging import setup_logger
@@ -18,7 +19,7 @@ colt_model_name = 'Colt45'
 colt_ollama_model = 'llama3.2'
 
 # used for conversations
-colt_current_session_chat_cache = []  # holds everyone's messages under their username as a key
+colt_current_session_chat_cache = deque(maxlen=20)
 
 
 def session_information():
@@ -49,7 +50,14 @@ def COLT_Create():
 
 
 def build_system_prompt(user_name, user_nickname):
-    system_prompt = f"""{colt_rules}"""
+    # todo -- explain the data better to the LLM
+
+    system_prompt = (f"""
+{colt_rules}
+This is a python deque, that holds information of the last 20 messages in the discord server.
+{colt_current_session_chat_cache}
+Use it for context about the conversation happening in the discord chat.
+""")
     return system_prompt
 
 
@@ -63,6 +71,8 @@ async def COLT_Message(message_author_name, message_author_nickname, message_con
 
 # === Core Logic ===
 async def COLT_Converse(user_name, user_nickname, user_input):
+    # colt_current_session_chat_cache
+
     system_prompt = build_system_prompt(user_name, user_nickname)
     full_prompt = ([{"role": "system", "content": system_prompt}] +
                    [{"role": "user", "content": user_input}])
@@ -86,6 +96,7 @@ async def COLT_Converse(user_name, user_nickname, user_input):
     # Debug Console Output
     debug_print = (f"""
 ===================================
+USER: {user_name}
 CONTENT:  {user_input}\n
 RESPONSE:  {response.message.content}
 ===================================

@@ -4,26 +4,6 @@ import random
 import discord
 
 
-def command_set_activity(current_activity=None):
-    possible_activities = [
-        discord.Game(name="Hello Kitty Island Adventure", platform="steam", type=discord.ActivityType.playing),
-        discord.Streaming(name="Memes", url="https://www.twitch.tv/evanskistudios"),
-        discord.Activity(type=discord.ActivityType.listening, name='Never Gonna Give You Up'),
-        discord.Activity(type=discord.ActivityType.watching, name="Shrek 7"),
-        discord.CustomActivity(name="Cheering Alyssa on!", emoji="🥳"),
-        discord.CustomActivity(name="<coroutine object S.A.M at 0x000001AB2C3D4567>", emoji="😘"),
-        discord.CustomActivity(name="Fantasising about Rick Astley", emoji="😳"),
-        None  # Clear status
-    ]
-
-    # Remove the current activity from the list if it matches
-    if current_activity in possible_activities:
-        possible_activities.remove(current_activity)
-
-    # Pick a new one randomly from the rest
-    return random.choice(possible_activities)
-
-
 def discord_activity_mapper(activity):
     activity_type_map = {
         discord.ActivityType.playing: "playing",
@@ -46,7 +26,7 @@ async def command_status(client, ctx, arg):
         activity = discord.CustomActivity(name=f"{arg}", emoji=' ')
         await client.change_presence(activity=activity)
     else:
-        activity = command_set_activity(client.activity)
+        activity = None
         await client.change_presence(activity=activity)
 
     # Get the new activity to respond with the new info about the status
