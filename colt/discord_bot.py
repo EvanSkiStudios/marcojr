@@ -9,7 +9,6 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from emoji_reactions_manager import llm_emoji_react_to_message, gather_server_emotes
 from colt45 import COLT_Create, COLT_Message
 
 # Load Env
@@ -82,12 +81,7 @@ async def on_disconnect():
 
 @client.event
 async def on_connect():
-    activity = bc.command_set_activity()
-    new_status = discord.Status.online
-    await client.change_presence(activity=activity, status=new_status)
-
-    global emote_dict
-    emote_dict = gather_server_emotes(client, BOT_SERVER_ID, BOT_TEST_SERVER_ID)
+    print(f"{client.user} connected!")
 
 
 @client.event
@@ -101,12 +95,7 @@ async def status(ctx, *, arg=None):
     await bc.command_status(client, ctx, arg)
 
 
-@client.command(help="Sets the conversation history between you and S.A.M, depending on the argument")
-async def history(ctx, arg=None):
-    await bc.command_history(ctx, arg)
-
-
-@client.command(help="Deletes the supplied S.A.M messages by id")
+@client.command(help="Deletes the supplied Colt messages by id")
 async def delete(ctx, *, arg=None):
     await bc.command_delete(client, ctx, arg)
 
@@ -119,19 +108,7 @@ async def ping(ctx, *, arg=None):
 # ------- MESSAGE HANDLERS ---------
 async def llm_chat(message, username, user_nickname, message_content):
     async with message.channel.typing():
-        attachment_url = None
-        attachments = None
-        if message.attachments:
-            for media in message.attachments:
-                content_type = str(media.content_type).lower()
-                # print(content_type)
-                attachment_url = media.url if content_type in ("image/png", "image/jpeg", "image/webp") else None
-                # Unhandled formats will give  (status code: 500) from the bot
-                attachments = message.attachments
-                # currently only looks at one image if there are multiple
-            # print(message.content) # gifs from the panel are just message content - currently cant see gifs anyway
-
-        response = await COLT_Message(username, user_nickname, message_content, attachment_url, attachments)
+        response = await COLT_Message(username, user_nickname, message_content)
 
     if response == -1:
         return
@@ -144,35 +121,13 @@ async def llm_chat(message, username, user_nickname, message_content):
             await message.channel.send(part)
 
 
-async def react_to_messages(message, message_lower):
-    global emote_dict
-
-    try:
-        # reaction
-        reaction = await llm_emoji_react_to_message(message_lower, emote_dict)
-
-        # discord limits by 20 reactions
-        limit = 20
-        reaction = reaction[:limit]
-        for emoji in reaction:
-            if emoji.find('no reaction') == -1:
-                await message.add_reaction(emoji)
-
-    except discord.HTTPException as e:
-        print(f"⚠️ {type(e).__name__} - {e}")
-        pass  # Suppresses all API-related errors (e.g., invalid emoji, rate limit)
-
-
 @client.event
 async def on_message(message):
     if str(message.channel.id) in channels_blacklist:
         return
     
-    await client.process_commands(message)  # This line is required!
-
+    await client.process_commands(message)
     message_content = message.content
-    username = message.author.name
-    user_nickname = message.author.display_name
 
     if message.mention_everyone:
         return
@@ -181,25 +136,12 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    # noinspection PyAsyncCall
-    asyncio.create_task(react_to_messages(message, message_content))
-    # task.add_done_callback(lambda t: t.exception())  # Prevent warning if task crashes
-    #  -- Its fine we don't care if it returns
+    username = message.author.name
+    user_nickname = message.author.display_name
 
     # DMs
     if isinstance(message.channel, discord.DMChannel):
         # print(f"{message_content}")
-
-        if message_content.lower().find('save history') != -1:
-            output = await bc.command_save_history(username)
-            await message.channel.send(output)
-            return
-
-        if message_content.lower().find('delete history') != -1:
-            output = await bc.command_delete_history(username)
-            await message.channel.send(output)
-            return
-
         await llm_chat(message, username, user_nickname, message_content)
         return
 

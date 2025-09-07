@@ -3,8 +3,6 @@ import os
 import random
 import discord
 
-from memories.message_memory_manager import remove_user_conversation_file
-
 
 def command_set_activity(current_activity=None):
     possible_activities = [
@@ -63,110 +61,6 @@ async def command_status(client, ctx, arg):
         return
 
     print(f"Changed Status to: {activity.type} {activity.name}")
-
-
-def convo_delete_history(username):
-    result = remove_user_conversation_file(username)
-    return result
-
-
-async def command_history(ctx, arg):
-    print(f"Command issued: history > {arg}")
-    if arg is not None:
-        arg = arg.lower()
-
-    if arg == "save":
-        information_message = """
-In order to save conversation history I require consent to save your discord messages.
-Only the messages you send to me will be saved and only used to remember details and conversation history.
-Your conversation history is never sold or given to anyone or any 3rd party.
-At any point you can run the command "$s clearhistory" to remove your conversation history.
-Please send me a DM with "save history" to opt in. or "delete history" to opt out.
-"""
-        await ctx.reply(ctx.author.mention + information_message)
-        return
-
-    if arg == "delete":
-        user = ctx.author.name
-        outcome = convo_delete_history(user)
-        outcome_message = "Unknown Error, Try again later!"
-
-        if outcome == 1:
-            print(f"Deleted Conversation history for {user}")
-            outcome_message = f"Deleted Conversation history for {user}"
-
-        if outcome == -1:
-            print(f"No Conversation history for {user}")
-            outcome_message = f"No Conversation history for {user}"
-
-        await ctx.send(outcome_message)
-        return
-
-    await ctx.reply(f"{arg} is not valid argument for history command <save/delete>")
-
-
-async def command_save_history(user):
-    # get location of consent file
-    running_dir = os.path.dirname(os.path.realpath(__file__))
-    file_location = str(running_dir) + "/memories/"
-    consent_file = os.path.join(file_location, "__consent_users.json")
-
-    if not os.path.exists(consent_file):
-        print("❌❌❌ Can not find user consent file!!")
-        return "unexpected Error Please Try again later"
-
-    # Load the message history
-    with open(consent_file, "r") as f:
-        file_data = json.load(f)
-
-    # add user to list
-    if str(user) not in file_data:
-        file_data.append(str(user))
-
-        # Save the updated data back to the file
-        with open(consent_file, 'w') as file:
-            json.dump(file_data, file, indent=4)
-
-    return (
-        "Your conversation history will now be saved.\nAt anytime send me 'delete history' to opt out.\nPlease also "
-        "see the command to delete conversation history by using '$fb help'")
-
-
-async def command_delete_history(user):
-    # get location of consent file
-    running_dir = os.path.dirname(os.path.realpath(__file__))
-    file_location = str(running_dir) + "/memories/"
-    consent_file = os.path.join(file_location, "__consent_users.json")
-
-    if not os.path.exists(consent_file):
-        print("❌❌❌ Can not find user consent file!!")
-        return "unexpected Error Please Try again later"
-
-    # Load the existing data
-    with open(consent_file, 'r') as file:
-        data = json.load(file)
-
-    # Remove "dave" if it exists
-    if str(user) in data:
-        data.remove(str(user))
-
-    # Save the updated data back to the file
-    with open(consent_file, 'w') as file:
-        json.dump(data, file, indent=4)
-
-    return_message = "You have been removed from the history collection list"
-
-    outcome = convo_delete_history(user)
-    outcome_message = "Unknown Error with current conversation history, Try again later!"
-
-    if outcome == 1:
-        outcome_message = "Conversation History has been deleted"
-
-    if outcome == -1:
-        outcome_message = ("Conversation History might not exist or an Error Occurred, Please Contact Evanski to have "
-                           "your history deleted")
-
-    return return_message + "\n" + outcome_message
 
 
 async def command_delete(client, ctx, arg):
