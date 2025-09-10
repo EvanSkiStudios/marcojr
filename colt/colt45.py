@@ -73,7 +73,6 @@ async def COLT_Message(message_author_name, message_author_nickname, message_con
 # === Core Logic ===
 async def COLT_Converse(user_name, user_nickname, user_input):
     chat_log = "\n".join(colt_current_session_chat_cache)
-    print(chat_log)
 
     system_prompt = build_system_prompt(user_name, user_nickname)
     full_prompt = (

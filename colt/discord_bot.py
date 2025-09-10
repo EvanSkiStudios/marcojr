@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 
@@ -9,7 +8,12 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from discord_bot_users_manager import handle_bot_message
+from utility_scripts.system_logging import setup_logger
 from colt45 import COLT_Create, COLT_Message, colt_current_session_chat_cache
+
+# configure logging
+logger = setup_logger(__name__)
 
 # Load Env
 load_dotenv()
@@ -39,8 +43,6 @@ client = commands.Bot(
     intents=intents,
     status=discord.Status.online
 )
-
-emote_dict = {}
 
 
 class MyHelpCommand(commands.HelpCommand):
@@ -98,12 +100,17 @@ async def delete(ctx, *, arg=None):
 
 
 @client.command(help="Sanity Check for input")
-async def ping(ctx, *, arg=None):
+async def ping(ctx):
     await ctx.send(f"Pong!")
 
 
 # ------- MESSAGE HANDLERS ---------
 async def llm_chat(message, username, user_nickname, message_content):
+    if message.author.bot:
+        result = handle_bot_message(username)
+        if result == -1:
+            return
+
     async with message.channel.typing():
         response = await COLT_Message(username, user_nickname, message_content)
 
