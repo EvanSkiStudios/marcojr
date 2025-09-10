@@ -9,7 +9,6 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
-import channel_chat_history as chat_cache
 from colt45 import COLT_Create, COLT_Message, colt_current_session_chat_cache
 
 # Load Env
@@ -126,17 +125,6 @@ async def on_message(message):
     
     await client.process_commands(message)
 
-    channel = client.get_channel(message.channel.id)
-    # Load last 30 if empty
-    if not colt_current_session_chat_cache:
-        await chat_cache.load_initial_messages(channel, colt_current_session_chat_cache)
-    else:
-        # Only add new if cache already exists
-        chat_cache.add_new_message(message, colt_current_session_chat_cache)
-
-    # Debug print
-    # chat_cache.print_cache(colt_current_session_chat_cache)
-
     message_content = message.content
     username = message.author.name
     user_nickname = message.author.display_name
@@ -144,6 +132,23 @@ async def on_message(message):
     for user in message.mentions:
         message_content = message_content.replace(f"<@{user.id}>", f"@{user.name}")
         message_content = message_content.replace(f"<@!{user.id}>", f"@{user.name}")
+
+    channel = client.get_channel(message.channel.id)
+    if not colt_current_session_chat_cache:
+        async for past_message in channel.history(limit=20):
+            user = past_message.author.name
+            user_nick = past_message.author.display_name
+            content = past_message.content
+            for user in past_message.mentions:
+                content = content.replace(f"<@{user.id}>", f"@{user.name}")
+                content = content.replace(f"<@!{user.id}>", f"@{user.name}")
+
+            colt_current_session_chat_cache.append(f'{user} ({user_nick}): \"{content}\"')
+        # Reverse once so it's oldest → newest
+        colt_current_session_chat_cache.reverse()
+    else:
+        # Only add new if cache already exists
+        colt_current_session_chat_cache.append(f'{username} ({user_nickname}): \"{message_content}\"')
 
     if message.mention_everyone:
         return

@@ -51,17 +51,13 @@ def COLT_Create():
 
 def build_system_prompt(user_name, user_nickname):
     system_prompt = (f"""
-You will be given a python deque, that holds information of the last 20 messages in the discord server.
-It will be in the following format:
-user_message: {{
-"userName": the name of the user,
-"userNickName": the nickname of the user,
-"messageDate": the date the message was created,
-"messageContent": the actual content of the message
-}}
-Here is the deque:
-{{{colt_current_session_chat_cache}}}
-Use it for context about the conversation happening in the discord chat.
+- The user will give you a chat log of full conversation history in this channel. 
+- Your role in the chat history is (Colt 45) 
+- You can refer to messages from any user in the conversation. 
+- When asked about something someone said earlier, summarize accurately using the context. 
+- Do not make up information about users outside of what is in the chat history. 
+- Keep your responses concise and relevant to the conversation.  
+- If someone refers to a prior message like "what did you say to Alice?", check the history and answer based on actual past messages.
 """)
     return system_prompt
 
@@ -76,13 +72,17 @@ async def COLT_Message(message_author_name, message_author_nickname, message_con
 
 # === Core Logic ===
 async def COLT_Converse(user_name, user_nickname, user_input):
-    # colt_current_session_chat_cache
+    chat_log = "\n".join(colt_current_session_chat_cache)
+    print(chat_log)
 
     system_prompt = build_system_prompt(user_name, user_nickname)
     full_prompt = (
-            [{"role": "system", "content": f"{colt_rules}"}] +
-            [{"role": "system", "content": system_prompt}] +
-            [{"role": "user", "content": user_input}]
+            [{"role": "system", "content": f"{colt_rules}" + system_prompt}] +
+            [{"role": "user", "content":
+                chat_log + "\n" +
+                f'{user_name} ({user_nickname}): \"{user_input}\"' +
+                "\nColt 45:"
+            }]
     )
 
     # should prevent discord heartbeat from complaining we are taking too long
