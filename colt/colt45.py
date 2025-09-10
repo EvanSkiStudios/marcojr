@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from datetime import datetime
 
 from ollama import Client, chat
 from collections import deque
@@ -72,43 +73,56 @@ async def COLT_Message(message_author_name, message_author_nickname, message_con
 
 # === Core Logic ===
 async def COLT_Converse(user_name, user_nickname, user_input):
-    chat_log = "\n".join(colt_current_session_chat_cache)
-
+    # Build system prompt
     system_prompt = build_system_prompt(user_name, user_nickname)
-    full_prompt = (
-            [{"role": "system", "content": f"{colt_rules}" + system_prompt}] +
-            [{"role": "user", "content":
-                chat_log + "\n" +
-                f'{user_name} ({user_nickname}): \"{user_input}\"' +
-                "\nColt 45:"
-            }]
-    )
 
-    # should prevent discord heartbeat from complaining we are taking too long
+    # Build chat messages from structured cache
+    full_prompt = [{"role": "system", "content": system_prompt}]
+    for entry in colt_current_session_chat_cache:
+        # Include timestamp and author in message for context
+        content_with_meta = f"[{entry['timestamp']}] {entry['author']}: {entry['content']}"
+        full_prompt.append({"role": entry["role"], "content": content_with_meta})
+
+    # Append current user input
+    timestamp = datetime.utcnow().isoformat()
+    full_prompt.append({
+        "role": "user",
+        "content": f"[{timestamp}] {user_name} ({user_nickname}): {user_input}\nColt 45:"
+    })
+
+    print(f"\n\n\n\n\n {full_prompt} \n\n\n\n\n\n")
+
+    # Call the Llama 3.2 model in a thread to prevent blocking Discord
     response = await asyncio.to_thread(
         chat,
         model=colt_model_name,
         messages=full_prompt,
-        options={
-            "num_ctx": 8192
-        }
+        options={"num_ctx": 8192}
     )
 
-    # Add the response to the messages to maintain the history
-    new_chat_entries = [
-        {"role": "user", "content": user_input},
-        {"role": "assistant", "content": response.message.content},
-    ]
+    # Add the latest messages to the cache for future context
+    colt_current_session_chat_cache.append({
+        "role": "user",
+        "author": f"{user_name} ({user_nickname})",
+        "timestamp": timestamp,
+        "content": user_input
+    })
+    colt_current_session_chat_cache.append({
+        "role": "assistant",
+        "author": "Colt 45",
+        "timestamp": datetime.utcnow().isoformat(),
+        "content": response.message.content
+    })
 
-    # Debug Console Output
-    debug_print = (f"""
+    # Debug console output
+    debug_print = f"""
 ===================================
 USER: {user_name}
-CONTENT:  {user_input}\n
-RESPONSE:  {response.message.content}
+CONTENT: {user_input}
+RESPONSE: {response.message.content}
 ===================================
-""")
+"""
     logger.info(debug_print)
 
-    # return the message to main script
+    # Return the model's response
     return response.message.content
