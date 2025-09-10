@@ -50,12 +50,17 @@ def COLT_Create():
 
 
 def build_system_prompt(user_name, user_nickname):
-    # todo -- explain the data better to the LLM
-
     system_prompt = (f"""
-{colt_rules}
-This is a python deque, that holds information of the last 20 messages in the discord server.
-{colt_current_session_chat_cache}
+You will be given a python deque, that holds information of the last 20 messages in the discord server.
+It will be in the following format:
+user_message: {{
+"userName": the name of the user,
+"userNickName": the nickname of the user,
+"messageDate": the date the message was created,
+"messageContent": the actual content of the message
+}}
+Here is the deque:
+{{{colt_current_session_chat_cache}}}
 Use it for context about the conversation happening in the discord chat.
 """)
     return system_prompt
@@ -74,8 +79,11 @@ async def COLT_Converse(user_name, user_nickname, user_input):
     # colt_current_session_chat_cache
 
     system_prompt = build_system_prompt(user_name, user_nickname)
-    full_prompt = ([{"role": "system", "content": system_prompt}] +
-                   [{"role": "user", "content": user_input}])
+    full_prompt = (
+            [{"role": "system", "content": f"{colt_rules}"}] +
+            [{"role": "system", "content": system_prompt}] +
+            [{"role": "user", "content": user_input}]
+    )
 
     # should prevent discord heartbeat from complaining we are taking too long
     response = await asyncio.to_thread(

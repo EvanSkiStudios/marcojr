@@ -13,7 +13,7 @@ def search_the_web(query):
 messages = [
     # {'role': 'system',
     #  'content': 'You will be given information from google, It contains several results for the users query. Use the information to answer the users question.'},
-    {'role': 'user', 'content': 'tell me about teh colt 45 handgun'}
+    {'role': 'user', 'content': 'search the web for info about schedual 1\'s new update'}
 ]
 print('Prompt:', messages[0]['content'])
 
