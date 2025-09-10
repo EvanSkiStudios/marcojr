@@ -129,33 +129,52 @@ async def llm_chat(message, username, user_nickname, message_content):
 async def on_message(message):
     if str(message.channel.id) in channels_blacklist:
         return
-    
+
     await client.process_commands(message)
 
     message_content = message.content
     username = message.author.name
     user_nickname = message.author.display_name
+    timestamp = message.created_at.isoformat()  # ISO timestamp
 
+    # Replace mentions with usernames
     for user in message.mentions:
         message_content = message_content.replace(f"<@{user.id}>", f"@{user.name}")
         message_content = message_content.replace(f"<@!{user.id}>", f"@{user.name}")
 
     channel = client.get_channel(message.channel.id)
-    if not colt_current_session_chat_cache:
-        async for past_message in channel.history(limit=20):
-            user = past_message.author.name
-            user_nick = past_message.author.display_name
-            content = past_message.content
-            for user in past_message.mentions:
-                content = content.replace(f"<@{user.id}>", f"@{user.name}")
-                content = content.replace(f"<@!{user.id}>", f"@{user.name}")
 
-            colt_current_session_chat_cache.append(f'{user} ({user_nick}): \"{content}\"')
-        # Reverse once so it's oldest → newest
-        colt_current_session_chat_cache.reverse()
+    # Load past messages if cache is empty
+    if not colt_current_session_chat_cache:
+        async for past_message in channel.history(limit=20, oldest_first=True):
+            pm_user = past_message.author.name
+            pm_nick = past_message.author.display_name
+            pm_content = past_message.content
+            pm_timestamp = past_message.created_at.isoformat()
+
+            # Clean mentions in past messages
+            for user in past_message.mentions:
+                pm_content = pm_content.replace(f"<@{user.id}>", f"@{user.name}")
+                pm_content = pm_content.replace(f"<@!{user.id}>", f"@{user.name}")
+
+            # Determine role
+            role = "assistant" if past_message.author == client.user else "user"
+
+            colt_current_session_chat_cache.append({
+                "role": role,
+                "author": f"{pm_user} ({pm_nick})",
+                "timestamp": pm_timestamp,
+                "content": pm_content
+            })
     else:
-        # Only add new if cache already exists
-        colt_current_session_chat_cache.append(f'{username} ({user_nickname}): \"{message_content}\"')
+        # Only add new incoming message
+        role = "assistant" if message.author == client.user else "user"
+        colt_current_session_chat_cache.append({
+            "role": role,
+            "author": f"{username} ({user_nickname})",
+            "timestamp": timestamp,
+            "content": message_content
+        })
 
     if message.mention_everyone:
         return
