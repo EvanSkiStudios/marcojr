@@ -2,7 +2,7 @@ import datetime
 
 
 def split_response(response, max_len=2000):
-    if len(response) < 2000:
+    if len(response) < max_len:
         return [response]
 
     chunks = []

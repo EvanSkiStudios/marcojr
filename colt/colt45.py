@@ -51,13 +51,13 @@ def COLT_Create():
 
 def build_system_prompt(user_name, user_nickname):
     system_prompt = (f"""
-- The user will give you a chat log of full conversation history in this channel. 
-- Your role in the chat history is (Colt 45) 
-- You can refer to messages from any user in the conversation. 
-- When asked about something someone said earlier, summarize accurately using the context. 
-- Do not make up information about users outside of what is in the chat history. 
-- Keep your responses concise and relevant to the conversation.  
-- If someone refers to a prior message like "what did you say to Alice?", check the history and answer based on actual past messages.
+You are speaking to multiple users in a discord channel.
+Each user will append their message with their username, and their preferred name in ().
+The username for each message is the owner of the content of the message.
+For example. "Bob (KingBobby): How are you feeling today?"
+In the example this means that Bob is the person who said "How are you feeling today?".
+So in the example you would respond to them, calling them KingBobby.
+Do not append your messages with your username and preferred name.
 """)
     return system_prompt
 
@@ -72,17 +72,17 @@ async def COLT_Message(message_author_name, message_author_nickname, message_con
 
 # === Core Logic ===
 async def COLT_Converse(user_name, user_nickname, user_input):
-    chat_log = "\n".join(colt_current_session_chat_cache)
+    chat_log = []
+    for message in colt_current_session_chat_cache:
+        chat_log.append(message)
 
     system_prompt = build_system_prompt(user_name, user_nickname)
     full_prompt = (
             [{"role": "system", "content": f"{colt_rules}" + system_prompt}] +
-            [{"role": "user", "content":
-                chat_log + "\n" +
-                f'{user_name} ({user_nickname}): \"{user_input}\"' +
-                "\nColt 45:"
-            }]
+            chat_log
     )
+
+    # print(full_prompt)
 
     # should prevent discord heartbeat from complaining we are taking too long
     response = await asyncio.to_thread(
@@ -94,13 +94,8 @@ async def COLT_Converse(user_name, user_nickname, user_input):
         }
     )
 
-    # Add the response to the messages to maintain the history
-    new_chat_entries = [
-        {"role": "user", "content": user_input},
-        {"role": "assistant", "content": response.message.content},
-    ]
-
     # Debug Console Output
+    logger.info(response)
     debug_print = (f"""
 ===================================
 USER: {user_name}

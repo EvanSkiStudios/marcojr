@@ -8,9 +8,12 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from determination_test import determine_llm_action
 from discord_bot_users_manager import handle_bot_message
+from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
 from colt45 import COLT_Create, COLT_Message, colt_current_session_chat_cache
+from utility_scripts.utility import split_response
 
 # configure logging
 logger = setup_logger(__name__)
@@ -112,15 +115,19 @@ async def llm_chat(message, username, user_nickname, message_content):
             return
 
     async with message.channel.typing():
-        response = await COLT_Message(username, user_nickname, message_content)
+        message_type = await determine_llm_action(message_content)
+        if message_type == 'tool':
+            response = await llm_internet_search(message_content)
+        else:
+            response = await COLT_Message(username, user_nickname, message_content)
 
     if response == -1:
         return
 
+    # response should have been split in the above function returns
     for i, part in enumerate(response):
         if not message.author.bot and i == 0:
             await message.reply(part)
-            # message_id = sent_message.id
         else:
             await message.channel.send(part)
 
@@ -150,12 +157,21 @@ async def on_message(message):
                 content = content.replace(f"<@{user.id}>", f"@{user.name}")
                 content = content.replace(f"<@!{user.id}>", f"@{user.name}")
 
-            colt_current_session_chat_cache.append(f'{user} ({user_nick}): \"{content}\"')
+            if past_message.author == client.user:
+                message_prompt = {"role": "assistant", "content": f'{content}'}
+            else:
+                message_prompt = {"role": "user", "content": f'{user} ({user_nick}): \"{content}\"'}
+
+            colt_current_session_chat_cache.append(message_prompt)
         # Reverse once so it's oldest → newest
         colt_current_session_chat_cache.reverse()
     else:
         # Only add new if cache already exists
-        colt_current_session_chat_cache.append(f'{username} ({user_nickname}): \"{message_content}\"')
+        if message.author == client.user:
+            message_prompt = {"role": "assistant", "content": f'{message_content}'}
+        else:
+            message_prompt = {"role": "user", "content": f'{username} ({user_nickname}): \"{message_content}\"'}
+        colt_current_session_chat_cache.append(message_prompt)
 
     if message.mention_everyone:
         return
