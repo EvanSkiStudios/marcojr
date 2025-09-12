@@ -56,7 +56,9 @@ Each user will append their message with their username, and their preferred nam
 The username for each message is the owner of the content of the message.
 For example. "Bob (KingBobby): How are you feeling today?"
 Do not append your messages with your username and preferred name.
-Always try to provide a neutral and informative response
+Always try to provide a response.
+Do not roleplay as other people.
+Only roleplay as yourself.
 """)
 
     # In the example this means that Bob is the person who said "How are you feeling today?".

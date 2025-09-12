@@ -128,7 +128,7 @@ async def search(interaction: discord.Interaction, query: str):
     await interaction.response.defer()  # shows "Bot is thinking..."
 
     response = await llm_internet_search(f"search the web for: {query}")
-    await interaction.followup.send(f'Query: "{query}"\n' + response[0])
+    await interaction.followup.send(f'Query: "{query}"\n' + response[0], suppress_embeds=True)
 
 
 # ------- MESSAGE HANDLERS ---------
@@ -152,9 +152,9 @@ async def llm_chat(message, username, user_nickname, message_content):
     # response should have been split in the above function returns
     for i, part in enumerate(response):
         if not message.author.bot and i == 0:
-            await message.reply(part)
+            await message.reply(part, suppress_embeds=True)
         else:
-            await message.channel.send(part)
+            await message.channel.send(part, suppress_embeds=True)
 
 
 @client.event
