@@ -8,13 +8,11 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from determination_test import determine_llm_action
 from discord_bot_users_manager import handle_bot_message
 from tools.search_determinator.job_determinator import is_search_request
 from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
 from colt45 import COLT_Create, COLT_Message, colt_current_session_chat_cache
-from utility_scripts.utility import split_response
 
 # configure logging
 logger = setup_logger(__name__)
@@ -47,6 +45,7 @@ client = commands.Bot(
     intents=intents,
     status=discord.Status.online
 )
+guild = discord.Object(id=BOT_SERVER_ID)
 
 
 class MyHelpCommand(commands.HelpCommand):
@@ -75,6 +74,13 @@ COLT_Create()
 async def on_ready():
     # When the bot has logged in, call back
     print(f'We have logged in as {client.user}')
+    await client.tree.sync(guild=guild)
+    # global
+    try:
+        synced = await client.tree.sync()
+        print(f"Synced {len(synced)} global command(s)")
+    except Exception as e:
+        print(e)
 
 
 @client.event
@@ -108,6 +114,23 @@ async def ping(ctx):
     await ctx.send(f"Pong!")
 
 
+# ------- SLASH COMMANDS ----------
+# noinspection PyUnresolvedReferences
+@client.tree.command(name="draw", description="Ping test", guild=guild)
+async def draw(interaction: discord.Interaction):
+    await interaction.response.send_message("Pew Pew! 🔥🔫")
+
+
+# noinspection PyUnresolvedReferences
+@client.tree.command(name="search", description="search internet", guild=guild)
+async def search(interaction: discord.Interaction, query: str):
+    # tell Discord we are working on it
+    await interaction.response.defer()  # shows "Bot is thinking..."
+
+    response = await llm_internet_search(f"search the web for: {query}")
+    await interaction.followup.send(f'Query: "{query}"\n' + response[0])
+
+
 # ------- MESSAGE HANDLERS ---------
 async def llm_chat(message, username, user_nickname, message_content):
     if message.author.bot:
@@ -118,6 +141,7 @@ async def llm_chat(message, username, user_nickname, message_content):
     async with message.channel.typing():
         message_is_request = is_search_request(message_content)
         if message_is_request:
+            logger.info(f"Message is a Internet Search")
             response = await llm_internet_search(message_content)
         else:
             response = await COLT_Message(username, user_nickname, message_content)

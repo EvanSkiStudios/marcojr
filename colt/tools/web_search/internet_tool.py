@@ -6,6 +6,10 @@ from ollama import ChatResponse, chat
 import colt45_ruleset
 from tools.web_search.google_websearch import google_search
 from utility_scripts.utility import split_response
+from utility_scripts.system_logging import setup_logger
+
+# configure logging
+logger = setup_logger(__name__)
 
 search_model = 'huihui_ai/llama3.2-abliterate'
 chat_model = 'huihui_ai/llama3.2-abliterate'
@@ -48,12 +52,16 @@ async def llm_internet_search(message):
         for tool in response.message.tool_calls:
             # Ensure the function is available, and then call it
             if function_to_call := available_functions.get(tool.function.name):
-                print('Calling function:', tool.function.name)
-                print('Arguments:', tool.function.arguments)
+                debug_print = (
+                    f'Calling function: {tool.function.name}' + '\n'
+                    f'Arguments: {tool.function.arguments}'
+                )
+                logger.info(debug_print)
+
                 output = function_to_call(**tool.function.arguments)
-                print('Function output:', output)
+                logger.info(f'Function output: {output}')
             else:
-                print('Function', tool.function.name, 'not found')
+                logger.error(f'Function {tool.function.name} not found')
 
     # Only needed to chat with the model using the tool call results
     if response.message.tool_calls:
@@ -65,12 +73,20 @@ async def llm_internet_search(message):
         final_response = chat(chat_model, stream=False, messages=[{'role': 'system', 'content': system_prompt}] + messages)
         # print('Final response:', final_response.message.content)
     else:
-        # print('No tool calls returned from model')
+        logger.info(f'No tool calls returned from model')
         final_response = chat(chat_model, stream=False, messages=[{'role': 'system', 'content': system_prompt}] + messages)
-        #print(response)
 
     output = final_response.message.content
     output = re.sub(r'\bEvanski_\b', 'Evanski', output, flags=re.IGNORECASE)
 
-    print(output)
+    logger.info(response)
+    logger.info(final_response)
+    debug_print = (f"""
+    ===================================
+    CONTENT:  {message}\n
+    RESPONSE:  {output}
+    ===================================
+    """)
+    logger.info(debug_print)
+
     return split_response(output)
