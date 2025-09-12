@@ -15,8 +15,8 @@ logger = setup_logger(__name__)
 colt_rules = COLT_personality
 
 # model settings for easy swapping
-colt_model_name = 'Colt45'
-colt_ollama_model = 'llama3.2'
+colt_model_name = 'Colt45_llama3.2_uncensored'
+colt_ollama_model = 'huihui_ai/llama3.2-abliterate'
 
 # used for conversations
 colt_current_session_chat_cache = deque(maxlen=20)
@@ -55,10 +55,13 @@ You are speaking to multiple users in a discord channel.
 Each user will append their message with their username, and their preferred name in ().
 The username for each message is the owner of the content of the message.
 For example. "Bob (KingBobby): How are you feeling today?"
-In the example this means that Bob is the person who said "How are you feeling today?".
-So in the example you would respond to them, calling them KingBobby.
 Do not append your messages with your username and preferred name.
+Always try to provide a neutral and informative response
 """)
+
+    # In the example this means that Bob is the person who said "How are you feeling today?".
+    # So in the example you would respond to them, calling them KingBobby.
+
     return system_prompt
 
 
@@ -75,6 +78,7 @@ async def COLT_Converse(user_name, user_nickname, user_input):
     chat_log = []
     for message in colt_current_session_chat_cache:
         chat_log.append(message)
+    print(chat_log)
 
     system_prompt = build_system_prompt(user_name, user_nickname)
     full_prompt = (

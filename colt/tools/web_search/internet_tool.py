@@ -7,8 +7,8 @@ import colt45_ruleset
 from tools.web_search.google_websearch import google_search
 from utility_scripts.utility import split_response
 
-search_model = 'llama3.2'
-chat_model = 'llama3.2'
+search_model = 'huihui_ai/llama3.2-abliterate'
+chat_model = 'huihui_ai/llama3.2-abliterate'
 
 
 def search_the_web(query):
@@ -25,6 +25,7 @@ You will be given a list of results from a google search.
 Make sure to include the url's of the results in your response.
 Put url's inside of <>
 For example <(url here)>
+Always try to provide a neutral and informative response
 """
 
 

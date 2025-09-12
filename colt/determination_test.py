@@ -3,6 +3,8 @@ import re
 
 from ollama import AsyncClient
 
+determinator_llm = 'huihui_ai/llama3.2-abliterate'
+
 
 async def determine_llm_action(content):
     dictation_rules = """
@@ -19,7 +21,7 @@ If the input is a request for a web search, you will respond with just "tool". O
 
     client = AsyncClient()
     response = await client.chat(
-        model='llama3.2',
+        model=determinator_llm,
         messages=[
             {"role": "system", "content": dictation_rules},
             {"role": "user", "content": content}

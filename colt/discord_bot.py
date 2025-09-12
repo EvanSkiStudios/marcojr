@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from determination_test import determine_llm_action
 from discord_bot_users_manager import handle_bot_message
+from tools.search_determinator.job_determinator import is_search_request
 from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
 from colt45 import COLT_Create, COLT_Message, colt_current_session_chat_cache
@@ -115,8 +116,8 @@ async def llm_chat(message, username, user_nickname, message_content):
             return
 
     async with message.channel.typing():
-        message_type = await determine_llm_action(message_content)
-        if message_type == 'tool':
+        message_is_request = is_search_request(message_content)
+        if message_is_request:
             response = await llm_internet_search(message_content)
         else:
             response = await COLT_Message(username, user_nickname, message_content)
