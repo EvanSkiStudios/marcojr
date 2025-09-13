@@ -8,6 +8,8 @@ import discord_commands as bc
 from discord.ext import commands
 from dotenv import load_dotenv
 
+import random
+
 from discord_bot_users_manager import handle_bot_message
 from test_scripts.elevenlabs_voice import text_to_speech
 from tools.search_determinator.job_determinator import is_search_request
@@ -132,6 +134,27 @@ async def search(interaction: discord.Interaction, query: str):
     await interaction.followup.send(f'Query: "{query}"\n' + response[0], suppress_embeds=True)
 
 
+# noinspection PyUnresolvedReferences
+@client.tree.command(name="tts", description="text to speech", guild=guild)
+async def search(interaction: discord.Interaction, text: str):
+    await interaction.response.defer()
+
+    tts_response = await text_to_speech(text, file_name=text)
+    if tts_response is None:
+        logger.error('TTS Error')
+
+        number = random.randint(1, 100)
+        # Check if the number is 45
+        if number == 45:
+            await interaction.followup.send('https://youtu.be/c4MAh9nCddc?t=5')
+        else:
+            await interaction.followup.send('Error making TTS. Probably out of cash.')
+        return
+
+    await interaction.followup.send(file=discord.File(tts_response))
+    os.remove(tts_response)
+
+
 # ------- MESSAGE HANDLERS ---------
 async def llm_chat(message, username, user_nickname, message_content):
     if message.author.bot:
@@ -174,7 +197,6 @@ async def llm_chat(message, username, user_nickname, message_content):
         if sent_message:
             await sent_message.reply(file=discord.File(tts_file))
         os.remove(tts_file)
-
 
 
 @client.event
