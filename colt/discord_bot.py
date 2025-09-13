@@ -9,6 +9,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from discord_bot_users_manager import handle_bot_message
+from test_scripts.elevenlabs_voice import text_to_speech
 from tools.search_determinator.job_determinator import is_search_request
 from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
@@ -138,6 +139,12 @@ async def llm_chat(message, username, user_nickname, message_content):
         if result == -1:
             return
 
+    is_tts_message = False
+    if not message.author.bot and re.search(r"\(tts\)", message_content, re.IGNORECASE):
+        logger.debug('Message is a TTS Message')
+        is_tts_message = True
+        message_content = re.sub(r"\(tts\)", "", message_content, flags=re.IGNORECASE)
+
     async with message.channel.typing():
         message_is_request = is_search_request(message_content)
         if message_is_request:
@@ -152,9 +159,22 @@ async def llm_chat(message, username, user_nickname, message_content):
     # response should have been split in the above function returns
     for i, part in enumerate(response):
         if not message.author.bot and i == 0:
-            await message.reply(part, suppress_embeds=True)
+            sent_message = await message.reply(part, suppress_embeds=True)
         else:
             await message.channel.send(part, suppress_embeds=True)
+
+    if is_tts_message:
+        text = response[0]
+        if text is None:
+            logger.error('TTS Error')
+            return
+        text_filtered = re.sub(r"\*(.*?)\*", r"[\1]", text)
+
+        tts_file = await text_to_speech(text_filtered)
+        if sent_message:
+            await sent_message.reply(file=discord.File(tts_file))
+        os.remove(tts_file)
+
 
 
 @client.event
