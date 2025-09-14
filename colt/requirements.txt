@@ -7,3 +7,5 @@ emoji~=2.14.1
 regex~=2024.11.6
 numpy~=2.2.6
 ijson~=3.4.0
+elevenlabs~=2.15.0
+pytest~=8.4.2

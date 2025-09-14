@@ -29,7 +29,7 @@ def clean_text(text: str) -> str:
     return cleaned
 
 
-async def text_to_speech(text: str, file_name='text_to_speech.mp3'):
+async def text_to_speech(text: str, file_name='text_to_speech'):
     logger.info("Starting TTS Message")
 
     def _blocking_tts():

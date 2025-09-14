@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import random
 
 from discord_bot_users_manager import handle_bot_message
-from test_scripts.elevenlabs_voice import text_to_speech
+from tools.elevenlabs_voice import text_to_speech
 from tools.search_determinator.job_determinator import is_search_request
 from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
@@ -29,6 +29,8 @@ BOT_SERVER_ID = os.getenv("GMCD_SERVER_ID")
 BOT_TEST_SERVER_ID = os.getenv("TEST_SERVER_ID")
 BOT_DM_CHANNEL_ID = os.getenv("DM_CHANNEL_ID")
 BOT_CHANNEL_ID = os.getenv("GMCD_CHANNEL_ID")
+
+MASTER_USER_ID = os.getenv("MASTER_USER_ID")
 
 GMC_DISCUSSION_THREAD = os.getenv("GMCD_NOT_ALLOWED_THREAD_D")
 GMC_NO_CONTEXT_THREAD = os.getenv("GMCD_NOT_ALLOWED_THREAD_NC")
@@ -136,7 +138,7 @@ async def search(interaction: discord.Interaction, query: str):
 
 # noinspection PyUnresolvedReferences
 @client.tree.command(name="tts", description="text to speech", guild=guild)
-async def search(interaction: discord.Interaction, text: str):
+async def tts(interaction: discord.Interaction, text: str):
     await interaction.response.defer()
 
     tts_response = await text_to_speech(text, file_name=text)
@@ -153,6 +155,15 @@ async def search(interaction: discord.Interaction, text: str):
 
     await interaction.followup.send(file=discord.File(tts_response))
     os.remove(tts_response)
+
+
+# noinspection PyUnresolvedReferences
+@client.tree.command(name="parrot", description="speak", guild=guild)
+async def search(interaction: discord.Interaction, text: str):
+    if str(interaction.user.id) != MASTER_USER_ID:
+        await interaction.response.send_message("Squawk!")
+    else:
+        await interaction.response.send_message(f"{text}")
 
 
 # ------- MESSAGE HANDLERS ---------
@@ -188,12 +199,13 @@ async def llm_chat(message, username, user_nickname, message_content):
 
     if is_tts_message:
         text = response[0]
-        if text is None:
-            logger.error('TTS Error')
-            return
         text_filtered = re.sub(r"\*(.*?)\*", r"[\1]", text)
 
         tts_file = await text_to_speech(text_filtered)
+        if tts_file is None:
+            logger.error('TTS Error')
+            return
+
         if sent_message:
             await sent_message.reply(file=discord.File(tts_file))
         os.remove(tts_file)
