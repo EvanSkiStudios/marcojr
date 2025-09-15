@@ -4,6 +4,7 @@ import re
 import discord
 
 import discord_commands as bc
+import discord_slash_commands as sc
 
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -166,6 +167,26 @@ async def search(interaction: discord.Interaction, text: str):
         await interaction.response.send_message(f"{text}")
 
 
+# noinspection PyUnresolvedReferences
+@client.tree.command(name="neuralize", description="Empties the conversation cache", guild=guild)
+async def neuralize(interaction: discord.Interaction):
+    if str(interaction.user.id) != MASTER_USER_ID:
+        await interaction.response.send_message("The inner mechanisms of my mind are an enigma")
+    else:
+        colt_current_session_chat_cache.clear()
+        await interaction.response.send_message(
+            "https://tenor.com/view/men-in-black-mib-will-smith-u-saw-nothing-kharter-gif-12731469441707899432",
+            delete_after=5
+        )
+
+
+# noinspection PyUnresolvedReferences
+@client.tree.command(name="doom", description="plays doom", guild=guild)
+async def doom(interaction: discord.Interaction):
+    doom_gif = sc.play_doom()
+    await interaction.response.send_message(file=discord.File(doom_gif))
+
+
 # ------- MESSAGE HANDLERS ---------
 async def llm_chat(message, username, user_nickname, message_content):
     if message.author.bot:
@@ -222,28 +243,30 @@ async def on_message(message):
     username = message.author.name
     user_nickname = message.author.display_name
 
-    for user in message.mentions:
-        message_content = message_content.replace(f"<@{user.id}>", f"@{user.name}")
-        message_content = message_content.replace(f"<@!{user.id}>", f"@{user.name}")
+    for person in message.mentions:
+        message_content = message_content.replace(f"<@{person.id}>", f"@{person.name}")
+        message_content = message_content.replace(f"<@!{person.id}>", f"@{person.name}")
 
     channel = client.get_channel(message.channel.id)
     if not colt_current_session_chat_cache:
         async for past_message in channel.history(limit=20):
-            user = past_message.author.name
-            user_nick = past_message.author.display_name
+            author_name = past_message.author.name
+            author_nick = past_message.author.display_name
             content = past_message.content
-            for user in past_message.mentions:
-                content = content.replace(f"<@{user.id}>", f"@{user.name}")
-                content = content.replace(f"<@!{user.id}>", f"@{user.name}")
+
+            for user_ref in past_message.mentions:
+                content = content.replace(f"<@{user_ref.id}>", f"@{user_ref.name}")
+                content = content.replace(f"<@!{user_ref.id}>", f"@{user_ref.name}")
 
             if past_message.author == client.user:
                 message_prompt = {"role": "assistant", "content": f'{content}'}
             else:
-                message_prompt = {"role": "user", "content": f'{user} ({user_nick}): \"{content}\"'}
+                message_prompt = {"role": "user", "content": f'{author_name} ({author_nick}): \"{content}\"'}
 
             colt_current_session_chat_cache.append(message_prompt)
         # Reverse once so it's oldest → newest
         colt_current_session_chat_cache.reverse()
+        logger.debug("Session Cache Created")
     else:
         # Only add new if cache already exists
         if message.author == client.user:

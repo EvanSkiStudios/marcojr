@@ -7,7 +7,7 @@ logger = setup_logger(__name__)
 
 # used for limited responses to bots
 bot_reply_timeout = {}
-MAX_MESSAGES = 3
+MAX_MESSAGES = 2
 COOLDOWN_SECONDS = 60
 
 

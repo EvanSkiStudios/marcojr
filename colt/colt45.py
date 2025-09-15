@@ -4,7 +4,7 @@ import sys
 from ollama import Client, chat
 from collections import deque
 
-from colt45_ruleset import COLT_personality
+from colt45_ruleset import COLT_personality, colt_system_prompt
 from utility_scripts.system_logging import setup_logger
 from utility_scripts.utility import split_response
 
@@ -50,21 +50,7 @@ def COLT_Create():
 
 
 def build_system_prompt(user_name, user_nickname):
-    system_prompt = (f"""
-You are speaking to multiple users in a discord channel.
-Each user will append their message with their username, and their preferred name in ().
-The username for each message is the owner of the content of the message.
-For example. "Bob (KingBobby): How are you feeling today?"
-Do not append your messages with your username and preferred name.
-Always try to provide a response.
-Do not roleplay as other people.
-Only roleplay as yourself.
-""")
-
-    # In the example this means that Bob is the person who said "How are you feeling today?".
-    # So in the example you would respond to them, calling them KingBobby.
-
-    return system_prompt
+    return colt_system_prompt
 
 
 # === Main Entry Point ===
@@ -88,9 +74,6 @@ async def COLT_Converse(user_name, user_nickname, user_input):
             chat_log
     )
 
-    # print(full_prompt)
-
-    # should prevent discord heartbeat from complaining we are taking too long
     response = await asyncio.to_thread(
         chat,
         model=colt_model_name,

@@ -24,9 +24,12 @@ client = ElevenLabs(
 def clean_text(text: str) -> str:
     # Remove *...* and [...] including the markers
     cleaned = re.sub(r"(\*.*?\*|\[.*?\])", "", text)
+    # Remove specific symbols
+    cleaned = re.sub(r"[!?\@$%^&\";:]", "", cleaned)
     # Remove extra spaces
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    return cleaned
+    # Limit to at most 10 characters
+    return cleaned[:14]
 
 
 async def text_to_speech(text: str, file_name='text_to_speech'):
