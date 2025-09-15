@@ -183,8 +183,9 @@ async def neuralize(interaction: discord.Interaction):
 # noinspection PyUnresolvedReferences
 @client.tree.command(name="doom", description="plays doom", guild=guild)
 async def doom(interaction: discord.Interaction):
+    await interaction.response.defer()
     doom_gif = sc.play_doom()
-    await interaction.response.send_message(file=discord.File(doom_gif))
+    await interaction.followup.send(file=discord.File(doom_gif))
 
 
 # ------- MESSAGE HANDLERS ---------
