@@ -29,6 +29,8 @@ def clean_text(text: str) -> str:
     # Remove extra spaces
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     # Limit to at most 10 characters
+    if cleaned == "":
+        cleaned = 'text_to_speech'
     return cleaned[:14]
 
 

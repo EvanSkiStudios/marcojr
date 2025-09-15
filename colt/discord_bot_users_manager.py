@@ -7,7 +7,7 @@ logger = setup_logger(__name__)
 
 # used for limited responses to bots
 bot_reply_timeout = {}
-MAX_MESSAGES = 2
+MAX_MESSAGES = 3
 COOLDOWN_SECONDS = 60
 
 
@@ -40,7 +40,7 @@ def handle_bot_message(username):
     user_data["message_count"] += 1
 
     # Trigger cooldown if message count exceeds MAX_MESSAGES
-    if user_data["message_count"] > MAX_MESSAGES:
+    if user_data["message_count"] >= MAX_MESSAGES:
         user_data["cooldown_until"] = now + COOLDOWN_SECONDS
         user_data["message_count"] = 0
         logger.warning(f"{username} is now on cooldown for {COOLDOWN_SECONDS} seconds.")
