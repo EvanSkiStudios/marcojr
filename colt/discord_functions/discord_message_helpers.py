@@ -18,24 +18,29 @@ def ns(d: dict) -> SimpleNamespace:
 load_dotenv()
 
 config_dict = {
-    "THREADS": {
+    "THREADS_ALLOW": {
+        "GMCD_CHANNEL_ID": os.getenv("GMCD_CHANNEL_ID"),
+        "TEST_THREAD_ID": os.getenv("TEST_THREAD_ID")
+    },
+    "THREADS_DENY": {
         "DISCUSSION": os.getenv("GMCD_NOT_ALLOWED_THREAD_D"),
         "NO_CONTEXT": os.getenv("GMCD_NOT_ALLOWED_THREAD_NC"),
-        "DANEEL": os.getenv("GMCD_DANEEL_STINKY"),
+        "DANEEL": os.getenv("GMCD_DANEEL_STINKY")
     },
     "BOTS": {
         "SCUNGEONMASTER": os.getenv("BOT_ID_SCUNGE")
     }
 }
 CONFIG = ns(config_dict)
-channels_blacklist = [int(v) for v in CONFIG.THREADS.__dict__.values()]
+channels_blacklist = [int(v) for v in CONFIG.THREADS_DENY.__dict__.values()]
 bots_blacklist = [int(b) for b in CONFIG.BOTS.__dict__.values()]
+channels_whitelist = [int(t) for t in CONFIG.THREADS_ALLOW.__dict__.values()]
 
 
 def should_ignore_message(client, message):
     if message.author in bots_blacklist:
         return True
-    if message.channel.id in channels_blacklist:
+    if message.channel.id not in channels_whitelist:
         return True
     if message.type == discord.MessageType.chat_input_command:
         return True
@@ -55,6 +60,9 @@ async def message_history_cache(client, message, message_content, username, user
                 continue
 
             if past_message.author in bots_blacklist:
+                continue
+
+            if message.type == discord.MessageType.thread_created:
                 continue
 
             # if past_message.type == discord_functions.MessageType.reply:

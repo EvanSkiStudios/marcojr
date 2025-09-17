@@ -1,5 +1,5 @@
 import pytest
-from tools.search_determinator.job_determinator import is_search_request
+from tools.search_determinator.internet_search_determinator import is_search_request
 
 import re
 import json
@@ -26,6 +26,7 @@ for i, pat in enumerate(SEARCH_PATTERNS, 1):
     ("look up some apples", True),
     ("show me Wikipedia for apples", True),
     ("check the internet for apples", True),
+    ("search for apples", True),
 
     # --- Polite / indirect phrasing ---
     ("please find me some apples", True),

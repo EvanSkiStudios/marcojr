@@ -9,8 +9,10 @@ from types import SimpleNamespace
 
 from discord_functions.discord_bot_users_manager import handle_bot_message
 from discord_functions.discord_message_helpers import should_ignore_message, message_history_cache
+from tools.determine_request import classify_request
 from tools.elevenlabs_voice import text_to_speech
-from tools.search_determinator.job_determinator import is_search_request
+from tools.search_determinator.internet_search_determinator import is_search_request
+from tools.weather.weather_tool import weather_search
 from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
 from colt45 import COLT_Create, COLT_Message
@@ -66,9 +68,9 @@ class MyBot(commands.Bot):
         await self.tree.sync(guild=guild)  # sync them instantly
 
 
-command_prefix = "🔫! "
+command_prefixes = ["🔫! ", ":gun:! ", "M! "]
 client = MyBot(
-    command_prefix=command_prefix,
+    command_prefix=command_prefixes,
     intents=intents,
     status=discord.Status.online
 )
@@ -78,7 +80,7 @@ class MyHelpCommand(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         help_message = f"""
 For Full documentation see: [The Github Repo](<https://github.com/EvanSkiStudios/marcojr>)
-Commands are issued like so: `{command_prefix}<command> <argument>`
+Commands are issued like so: `{command_prefixes}<command> <argument>`
 ```Here are my commands:
 """
         for command_cog, commands_list in mapping.items():
@@ -145,12 +147,19 @@ async def llm_chat(message, username, user_nickname, message_content):
         message_content = re.sub(r"\(tts\)", "", message_content, flags=re.IGNORECASE)
 
     async with message.channel.typing():
-        message_is_request = is_search_request(message_content)
-        if message_is_request:
-            logger.info("Message is a Internet Search")
-            response = await llm_internet_search(message_content)
-        else:
-            response = await COLT_Message(username, user_nickname, message_content)
+        request_classification = classify_request(message_content)
+
+        logger.info(f"Classification={request_classification}, Content={message_content}")
+
+        match request_classification:
+            case "weather":
+                response = await weather_search(message_content)
+
+            case "search":
+                response = await llm_internet_search(message_content)
+
+            case _:
+                response = await COLT_Message(username, user_nickname, message_content)
 
     if response == -1:
         return
@@ -174,7 +183,7 @@ async def on_message(message):
 
     await client.process_commands(message)
 
-    if message.content.find(command_prefix) != -1:
+    if any(message.content.startswith(prefix) for prefix in command_prefixes):
         return True
 
     # gather message data

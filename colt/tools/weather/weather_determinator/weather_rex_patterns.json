@@ -1,0 +1,6 @@
+[
+  ".*\\b(weather|temperature|forecast)\\b.*",
+  ".*\\b(rain|snow|sunny|cloudy|storm)\\b.*(today|tomorrow|tonight)?",
+  ".*\\bwhat'?s the weather (in|at)\\b.*",
+  ".*\\bhow (hot|cold) is it\\b.*"
+]
