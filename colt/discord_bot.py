@@ -56,7 +56,8 @@ class MyBot(commands.Bot):
             "discord_functions.cogs.slash_commands.neuralize",
             "discord_functions.cogs.slash_commands.parrot",
             "discord_functions.cogs.slash_commands.search",
-            "discord_functions.cogs.slash_commands.tts"
+            "discord_functions.cogs.slash_commands.tts",
+            "discord_functions.cogs.slash_commands.weather"
         ]
         for cog in cogs:
             await self.load_extension(cog)

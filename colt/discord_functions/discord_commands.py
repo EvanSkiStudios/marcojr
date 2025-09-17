@@ -3,6 +3,8 @@ import os
 import random
 import discord
 
+from colt45 import colt_current_session_chat_cache
+
 
 def discord_activity_mapper(activity):
     activity_type_map = {
@@ -72,6 +74,11 @@ async def command_delete(client, ctx, arg):
         report.append("❌ Failed:\n" + "\n".join(f"{i}: {reason}" for i, reason in failed))
 
     print(report)
-    await ctx.send("Deleted: (" + str(len(deleted)) + ") Messages", delete_after=10)
+    msg = await ctx.send("Deleted: (" + str(len(deleted)) + ") Messages", delete_after=6)
+    # colt_current_session_chat_cache.clear()
+    # await ctx.send(
+    #    "https://tenor.com/view/men-in-black-mib-will-smith-u-saw-nothing-kharter-gif-12731469441707899432",
+    #    delete_after=5, reference=msg
+    # )
 
 

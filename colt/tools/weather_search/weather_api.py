@@ -3,6 +3,8 @@ import os
 import requests
 from dotenv import load_dotenv
 
+from tools.weather_search.state_capitals import get_capital
+
 # Load Env
 load_dotenv()
 
@@ -51,6 +53,9 @@ def get_current_forecast(session: requests.Session, lat, lon):
 
 
 def get_weather(city, state=""):
+    if not city:
+        city = get_capital(state)
+
     with requests.Session() as session:
         lat, lon, city, state = geocode_city(session, city + ", " + state)
         current = get_current_forecast(session, lat, lon)
@@ -59,6 +64,21 @@ def get_weather(city, state=""):
             "summary": f"{current['name']}: {current['temperature']} {current['temperatureUnit']}, {current['shortForecast']}",
             "details": current["detailedForecast"],
         }
+
+
+def slash_get_weather(city="", state=""):
+    if not city:
+        city = get_capital(state)
+
+    with requests.Session() as session:
+        lat, lon, city, state = geocode_city(session, city + ", " + state)
+        current = get_current_forecast(session, lat, lon)
+        return (f"""
+The current weather in {city}, {state},
+{current['name']}:
+{current['temperature']} {current['temperatureUnit']},
+{current["detailedForecast"]}
+        """)
 
 
 def main():
