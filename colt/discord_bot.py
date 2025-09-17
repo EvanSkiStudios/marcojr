@@ -11,8 +11,7 @@ from discord_functions.discord_bot_users_manager import handle_bot_message
 from discord_functions.discord_message_helpers import should_ignore_message, message_history_cache
 from tools.determine_request import classify_request
 from tools.elevenlabs_voice import text_to_speech
-from tools.search_determinator.internet_search_determinator import is_search_request
-from tools.weather.weather_tool import weather_search
+from tools.weather_search.weather_tool import weather_search
 from tools.web_search.internet_tool import llm_internet_search
 from utility_scripts.system_logging import setup_logger
 from colt45 import COLT_Create, COLT_Message
@@ -152,7 +151,7 @@ async def llm_chat(message, username, user_nickname, message_content):
         logger.info(f"Classification={request_classification}, Content={message_content}")
 
         match request_classification:
-            case "weather":
+            case "weather_search":
                 response = await weather_search(message_content)
 
             case "search":

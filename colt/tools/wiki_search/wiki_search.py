@@ -1,9 +1,14 @@
-import requests
+import os
 
+import requests
+from dotenv import load_dotenv
+
+# Load Env
+load_dotenv()
 
 cse_client = requests.Session()
 cse_client.headers.update({
-    "User-Agent": "SAM (https://github.com/EvanSkiStudios/sam_ai_assistant; EvanskiStudios@gmail.com)"
+    "User-Agent": os.getenv("USER_AGENT")
 })
 
 

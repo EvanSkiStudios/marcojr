@@ -4,7 +4,7 @@ import re
 from ollama import ChatResponse, chat
 
 import colt45_ruleset
-from tools.weather.weather_api import get_weather
+from tools.weather_search.weather_api import get_weather
 from utility_scripts.utility import split_response
 from utility_scripts.system_logging import setup_logger
 
@@ -25,7 +25,7 @@ available_functions = {
 
 system_prompt = f"""
 {colt45_ruleset.COLT_personality}
-You will be given the results of a weather search.
+You will be given the results of a weather_search search.
 Respond with the full results in detail.
 Always try to provide a neutral and informative response.
 """
@@ -91,7 +91,7 @@ async def weather_search(message):
 
 
 async def main():
-    query = "whats the weather in north dekota?"
+    query = "whats the weather_search in north dekota?"
     response = await weather_search(query)
     print(response)
 

@@ -1,7 +1,13 @@
+import os
+
 import requests
+from dotenv import load_dotenv
+
+# Load Env
+load_dotenv()
 
 HEADERS = {
-    "User-Agent": "SAM (https://github.com/EvanSkiStudios/sam_ai_assistant; EvanskiStudios@gmail.com)"
+    "User-Agent": os.getenv("USER_AGENT")
 }
 BASE_URL = "https://api.weather.gov"
 

@@ -1,5 +1,5 @@
 import pytest
-from tools.search_determinator.internet_search_determinator import is_search_request
+from tools.web_search.search_determinator.internet_search_determinator import is_search_request
 
 import re
 import json

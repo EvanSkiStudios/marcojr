@@ -1,0 +1,9 @@
+[
+  ".*\\b(weather|temperature|forecast)\\b.*\\b(in|at|for)\\b.*",
+  ".*\\b(rain|snow|sunny|cloudy|storm)\\b.*\\b(in|at|for)\\b.*",
+  ".*\\bwhat(?:'s| is) the weather\\b.*\\b(in|at|for)\\b.*",
+  ".*\\bhow (hot|cold|warm|chilly) is it\\b.*\\b(in|at|for)\\b.*",
+  ".*\\bis it (hot|cold|warm|chilly)\\b.*\\b(in|at|for)\\b.*",
+  ".*\\bhow's the weather looking\\b.*\\b(in|at|for)\\b.*",
+  ".*\\btell me the weather\\b.*\\b(in|at|for)\\b.*"
+]
