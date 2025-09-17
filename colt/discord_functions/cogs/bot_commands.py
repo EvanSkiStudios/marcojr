@@ -1,5 +1,10 @@
 from discord.ext import commands
-import discord_commands as bc
+
+from discord_functions import discord_commands as bc
+from utility_scripts.system_logging import setup_logger
+
+# configure logging
+logger = setup_logger(__name__)
 
 
 class Utility(commands.Cog):
@@ -17,6 +22,10 @@ class Utility(commands.Cog):
     @commands.command(help="Deletes the supplied Colt messages by id")
     async def delete(self, ctx, *, arg=None):
         await bc.command_delete(self.client, ctx, arg)
+
+    @commands.command(help="test")
+    async def test(self, ctx, *, arg=None):
+        await ctx.send("Pew Pew! 🔥🔫")
 
 
 async def setup(bot: commands.Bot):

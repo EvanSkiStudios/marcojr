@@ -22,20 +22,24 @@ config_dict = {
         "DISCUSSION": os.getenv("GMCD_NOT_ALLOWED_THREAD_D"),
         "NO_CONTEXT": os.getenv("GMCD_NOT_ALLOWED_THREAD_NC"),
         "DANEEL": os.getenv("GMCD_DANEEL_STINKY"),
+    },
+    "BOTS": {
+        "SCUNGEONMASTER": os.getenv("BOT_ID_SCUNGE")
     }
 }
 CONFIG = ns(config_dict)
 channels_blacklist = [int(v) for v in CONFIG.THREADS.__dict__.values()]
+bots_blacklist = [int(b) for b in CONFIG.BOTS.__dict__.values()]
 
 
-def should_ignore_message(client, command_prefix, message):
+def should_ignore_message(client, message):
+    if message.author in bots_blacklist:
+        return True
     if message.channel.id in channels_blacklist:
         return True
     if message.type == discord.MessageType.chat_input_command:
         return True
     if message.mention_everyone:
-        return True
-    if message.content.find(command_prefix) != -1:
         return True
     if message.author == client.user:
         return True
@@ -50,7 +54,10 @@ async def message_history_cache(client, message, message_content, username, user
             if past_message.type == discord.MessageType.chat_input_command:
                 continue
 
-            # if past_message.type == discord.MessageType.reply:
+            if past_message.author in bots_blacklist:
+                continue
+
+            # if past_message.type == discord_functions.MessageType.reply:
 
             author_name = past_message.author.name
             author_nick = past_message.author.display_name
@@ -66,7 +73,7 @@ async def message_history_cache(client, message, message_content, username, user
         colt_current_session_chat_cache.reverse()
         logger.debug("Session Cache Created")
     else:
-        # if past_message.type == discord.MessageType.reply:
+        # if past_message.type == discord_functions.MessageType.reply:
 
         # Only add new if cache already exists
         if message.author == client.user:

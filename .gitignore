@@ -12,3 +12,4 @@ colt/.env
 colt/memories/__consent_users.json
 colt/memories/__things_you_know.json
 /colt/assets/images
+*.pyc

@@ -7,8 +7,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from types import SimpleNamespace
 
-from discord_bot_users_manager import handle_bot_message
-from discord_message_helpers import should_ignore_message, message_history_cache
+from discord_functions.discord_bot_users_manager import handle_bot_message
+from discord_functions.discord_message_helpers import should_ignore_message, message_history_cache
 from tools.elevenlabs_voice import text_to_speech
 from tools.search_determinator.job_determinator import is_search_request
 from tools.web_search.internet_tool import llm_internet_search
@@ -40,7 +40,7 @@ config_dict = {
 }
 CONFIG = ns(config_dict)
 
-# set discord intents
+# set discord_functions intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.emojis_and_stickers = True
@@ -50,12 +50,12 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # Load cogs here
         cogs = [
-            "discord.cogs.bot_commands",
-            "discord.cogs.slash_commands.doom",
-            "discord.cogs.slash_commands.neuralize",
-            "discord.cogs.slash_commands.parrot",
-            "discord.cogs.slash_commands.search",
-            "discord.cogs.slash_commands.tts"
+            "discord_functions.cogs.bot_commands",
+            "discord_functions.cogs.slash_commands.doom",
+            "discord_functions.cogs.slash_commands.neuralize",
+            "discord_functions.cogs.slash_commands.parrot",
+            "discord_functions.cogs.slash_commands.search",
+            "discord_functions.cogs.slash_commands.tts"
         ]
         for cog in cogs:
             await self.load_extension(cog)
@@ -100,7 +100,7 @@ COLT_Create()
 async def on_ready():
     # When the bot has logged in, call back
     logger.info(f'We have logged in as {client.user}')
-    # await client.tree.sync(guild=discord.Object(id=CONFIG.BOT.SERVER_ID))
+    # await client.tree.sync(guild=discord_functions.Object(id=CONFIG.BOT.SERVER_ID))
 
 
 @client.event
@@ -169,9 +169,13 @@ async def llm_chat(message, username, user_nickname, message_content):
 
 @client.event
 async def on_message(message):
-    if should_ignore_message(client, command_prefix, message):
+    if should_ignore_message(client, message):
         return
+
     await client.process_commands(message)
+
+    if message.content.find(command_prefix) != -1:
+        return True
 
     # gather message data
     message_content = message.clean_content
@@ -191,6 +195,8 @@ async def on_message(message):
 
     # replying to bot directly
     if message.reference:
+        if message.type == discord.MessageType.thread_created:
+            return
         referenced_message = await message.channel.fetch_message(message.reference.message_id)
         if referenced_message.author == client.user:
             await llm_chat(message, username, user_nickname, message_content)
@@ -211,5 +217,5 @@ async def on_message(message):
         return
 
 
-# Startup discord Bot
+# Startup discord_functions Bot
 client.run(CONFIG.BOT.TOKEN)
