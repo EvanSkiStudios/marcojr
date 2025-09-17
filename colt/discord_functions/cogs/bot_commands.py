@@ -24,7 +24,7 @@ class Utility(commands.Cog):
         await bc.command_delete(self.client, ctx, arg)
 
     @commands.command(help="test")
-    async def test(self, ctx, *, arg=None):
+    async def test(self, ctx):
         await ctx.send("Pew Pew! 🔥🔫")
 
 

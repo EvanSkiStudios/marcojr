@@ -1,9 +1,4 @@
-import json
-import os
-import random
 import discord
-
-from colt45 import colt_current_session_chat_cache
 
 
 def discord_activity_mapper(activity):
