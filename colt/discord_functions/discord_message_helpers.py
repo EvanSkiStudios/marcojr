@@ -59,76 +59,71 @@ colt_current_session_chat_cache = deque(maxlen=40)
 
 def session_chat_cache():
     global colt_current_session_chat_cache
-
     return colt_current_session_chat_cache
 
 
 def clear_chat_cache():
     global colt_current_session_chat_cache
     colt_current_session_chat_cache.clear()
+    logger.debug(colt_current_session_chat_cache)
 
 
 async def message_history_cache(client, message):
     global colt_current_session_chat_cache
 
-    channel = client.get_channel(message.channel.id)
+    def build_user_prompt(author, nick, content, reply_to=None):
+        """Helper to format user messages (with optional reply)."""
+        if reply_to:
+            return {
+                "role": "user",
+                "content": f'{author} ({nick}) (Replying to: {reply_to}): "{content}"'
+            }
+        return {"role": "user", "content": f'{author} ({nick}): "{content}"'}
+
+    def build_assistant_prompt(content=""):
+        """Helper to format assistant messages."""
+        return {"role": "assistant", "content": content}
+
+    async def process_message(msg):
+        """Process a single Discord message into prompts."""
+        # Skip irrelevant messages
+        if msg.type in {discord.MessageType.chat_input_command, discord.MessageType.thread_created}:
+            return []
+        if msg.author in bots_blacklist:
+            return []
+
+        author_name = msg.author.name
+        author_nick = msg.author.display_name
+        content = msg.clean_content
+
+        # Assistant (bot) message
+        if msg.author.id == client.user.id:
+            return [build_assistant_prompt(content)]
+
+        # Reply message
+        if msg.type == discord.MessageType.reply and msg.reference:
+            referenced = await msg.channel.fetch_message(msg.reference.message_id)
+            prompts = [
+                build_user_prompt(author_name, author_nick, content, referenced.author.name)
+            ]
+            return prompts
+
+        # Regular user message
+        prompts = [build_user_prompt(author_name, author_nick, content)]
+        return prompts
+
+    # First-time cache build
     if not colt_current_session_chat_cache:
+        channel = client.get_channel(message.channel.id)
+        history_prompts = []
         async for past_message in channel.history(limit=20):
+            history_prompts.extend(await process_message(past_message))
 
-            if past_message.type == discord.MessageType.chat_input_command:
-                continue
-
-            if past_message.author in bots_blacklist:
-                continue
-
-            if message.type == discord.MessageType.thread_created:
-                continue
-
-            author_name = past_message.author.name
-            author_nick = past_message.author.display_name
-            content = past_message.clean_content
-
-            # if past_message.type == discord.MessageType.reply:
-
-            if past_message.author == client.user:
-                message_prompt = {"role": "assistant", "content": f'{content}'}
-                assistant_prompt = None
-            else:
-                message_prompt = {"role": "user", "content": f'{author_name} ({author_nick}): \"{content}\"'}
-                assistant_prompt = {"role": "assistant", "content": ''}
-
-            colt_current_session_chat_cache.append(message_prompt)
-            if assistant_prompt is not None:
-                colt_current_session_chat_cache.append(assistant_prompt)
-                assistant_prompt = None
-
-        # Reverse once so it's oldest → newest
-        colt_current_session_chat_cache.reverse()
+        colt_current_session_chat_cache.extend(reversed(history_prompts))
         logger.debug("Session Cache Created")
-        print(colt_current_session_chat_cache)
-    else:
-        message_content = message.clean_content
-        author_name = message.author.name
-        author_nick = message.author.display_name
+        return
 
-        if message.type == discord.MessageType.reply:
-            print(message.reference)
-            print(f"Author: {message.author.name}")
-            referenced_message = await message.channel.fetch_message(message.reference.message_id)
-            print(f"Ref Auth:  {referenced_message.author.name}")
-
-        # todo -- add replies
-
-        # Only add new if cache already exists
-        if message.author == client.user:
-            message_prompt = {"role": "assistant", "content": f'{message_content}'}
-            assistant_prompt = None
-        else:
-            message_prompt = {"role": "user", "content": f'{author_name} ({author_nick}): \"{message_content}\"'}
-            assistant_prompt = {"role": "assistant", "content": ''}
-
-        colt_current_session_chat_cache.append(message_prompt)
-        if assistant_prompt is not None:
-            colt_current_session_chat_cache.append(assistant_prompt)
-            assistant_prompt = None
+    # Incremental update (no assistant prompt for user messages here)
+    new_prompts = await process_message(message)
+    colt_current_session_chat_cache.extend(new_prompts)
 

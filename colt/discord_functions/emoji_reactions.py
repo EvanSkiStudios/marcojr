@@ -58,7 +58,7 @@ Do not respond to the message. Only respond as instructed.
 Always provide a instructed response.
 """)
 
-emoji_llm = 'llama3.2'
+emoji_llm = 'huihui_ai/llama3.2-abliterate'
 
 system_prompt = dictation_rules
 
@@ -75,7 +75,6 @@ async def llm_emoji_react_to_message(content):
     )
 
     output = response.message.content
-    print(output)
     output = output.replace("'", "").strip()
 
     if output.lower() == "no reaction":

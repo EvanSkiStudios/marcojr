@@ -60,7 +60,6 @@ async def COLT_Converse(user_name, user_nickname, user_input):
 
     chat_log = []
     for message in current_session_chat_cache:
-        print(message)
         chat_log.append(message)
 
     system_prompt = build_system_prompt(user_name, user_nickname)
