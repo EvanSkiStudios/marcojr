@@ -2,9 +2,9 @@ import asyncio
 import sys
 
 from ollama import Client, chat
-from collections import deque
 
 from colt45_ruleset import COLT_personality, colt_system_prompt
+from discord_functions.discord_message_helpers import session_chat_cache
 from utility_scripts.system_logging import setup_logger
 from utility_scripts.utility import split_response
 
@@ -18,13 +18,6 @@ colt_rules = COLT_personality
 colt_model_name = 'Colt45_llama3.2_uncensored'
 colt_ollama_model = 'huihui_ai/llama3.2-abliterate'
 
-# used for conversations
-colt_current_session_chat_cache = deque(maxlen=20)
-
-
-def session_information():
-    return colt_current_session_chat_cache
-
 
 def COLT_Create():
     try:
@@ -37,7 +30,7 @@ def COLT_Create():
         )
         # print(f"# Client: {response.status}")
         logger.info(f"# Client: {response.status}")
-        return session_information()
+        return
 
     except ConnectionError as e:
         logger.error('Ollama is not running!')
@@ -63,8 +56,11 @@ async def COLT_Message(message_author_name, message_author_nickname, message_con
 
 # === Core Logic ===
 async def COLT_Converse(user_name, user_nickname, user_input):
+    current_session_chat_cache = session_chat_cache()
+
     chat_log = []
-    for message in colt_current_session_chat_cache:
+    for message in current_session_chat_cache:
+        print(message)
         chat_log.append(message)
 
     system_prompt = build_system_prompt(user_name, user_nickname)

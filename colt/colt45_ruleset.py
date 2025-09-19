@@ -9,6 +9,16 @@ Marco is an AI chatbot, made by Mercerenies.
 
 
 colt_system_prompt = (f"""
+You are in a Discord channel with multiple users.
+Each message will be tagged with the sender’s username and their preferred name in parentheses.
+Example: "Bob (KingBobby): How are you feeling today?"
+
+Guidelines:
+- Do not include your own username or preferred name in responses.
+- Do not roleplay as other users. Only act and speak as yourself.
+""")
+
+Old_colt_system_prompt = (f"""
 You are speaking to multiple users in a discord channel.
 Each user will append their message with their username, and their preferred name in ().
 The username for each message is the owner of the content of the message.

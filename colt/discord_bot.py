@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 
@@ -9,6 +10,7 @@ from types import SimpleNamespace
 
 from discord_functions.discord_bot_users_manager import handle_bot_message
 from discord_functions.discord_message_helpers import should_ignore_message, message_history_cache
+from discord_functions.emoji_reactions import react_to_messages
 from tools.determine_request import classify_request
 from tools.elevenlabs_voice import text_to_speech
 from tools.weather_search.weather_tool import weather_search
@@ -52,6 +54,7 @@ class MyBot(commands.Bot):
         # Load cogs here
         cogs = [
             "discord_functions.cogs.bot_commands",
+            "discord_functions.cogs.slash_commands.delete",
             "discord_functions.cogs.slash_commands.doom",
             "discord_functions.cogs.slash_commands.neuralize",
             "discord_functions.cogs.slash_commands.parrot",
@@ -102,7 +105,6 @@ COLT_Create()
 async def on_ready():
     # When the bot has logged in, call back
     logger.info(f'We have logged in as {client.user}')
-    # await client.tree.sync(guild=discord_functions.Object(id=CONFIG.BOT.SERVER_ID))
 
 
 @client.event
@@ -184,18 +186,22 @@ async def on_message(message):
     await client.process_commands(message)
 
     if any(message.content.startswith(prefix) for prefix in command_prefixes):
-        return True
+        return
+
+    # noinspection PyAsyncCall
+    asyncio.create_task(react_to_messages(message))
 
     # gather message data
     message_content = message.clean_content
     username = message.author.name
     user_nickname = message.author.display_name
 
-    await message_history_cache(client, message, message_content, username, user_nickname)
+    await message_history_cache(client, message)
 
     if message.attachments:
         for media in message.attachments:
             content_type = str(media.content_type).lower()
+            print(content_type)
 
     # DMs
     if isinstance(message.channel, discord.DMChannel):

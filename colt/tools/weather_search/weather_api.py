@@ -52,7 +52,7 @@ def get_current_forecast(session: requests.Session, lat, lon):
     return forecast_data["properties"]["periods"][0]
 
 
-def get_weather(city, state=""):
+def get_weather(city="", state=""):
     if not city:
         city = get_capital(state)
 

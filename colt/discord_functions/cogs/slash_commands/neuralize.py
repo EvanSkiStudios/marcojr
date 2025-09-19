@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from colt45 import colt_current_session_chat_cache
+from discord_functions.discord_message_helpers import clear_chat_cache
 from utility_scripts.system_logging import setup_logger
 
 # configure logging
@@ -36,7 +36,7 @@ class Neuralize(commands.Cog):
         if interaction.user.id != int(CONFIG.MASTER_USER_ID):
             await interaction.response.send_message("The inner mechanisms of my mind are an enigma")
         else:
-            colt_current_session_chat_cache.clear()
+            clear_chat_cache()
             await interaction.response.send_message(
                 "https://tenor.com/view/men-in-black-mib-will-smith-u-saw-nothing-kharter-gif-12731469441707899432",
                 delete_after=5

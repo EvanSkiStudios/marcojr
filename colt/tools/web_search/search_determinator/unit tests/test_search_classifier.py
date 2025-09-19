@@ -27,6 +27,9 @@ for i, pat in enumerate(SEARCH_PATTERNS, 1):
     ("show me Wikipedia for apples", True),
     ("check the internet for apples", True),
     ("search for apples", True),
+    ("do a search for apples", True),
+    ("do a web search for apples", True),
+
 
     # --- Polite / indirect phrasing ---
     ("please find me some apples", True),
@@ -56,6 +59,10 @@ for i, pat in enumerate(SEARCH_PATTERNS, 1):
     ("reading a wikipedia article yesterday", False),
     ("wikipedia is a non-profit organization", False),
     ("the web is vast and complex", False),
+
+    # --- Bot checks ---
+    ('colt do a search for "Evanski Studios"', True),
+    ('colt do a web search for "Evanski Studios"', True),
 ])
 def test_is_search_request(text, expected):
     assert is_search_request(text) == expected
