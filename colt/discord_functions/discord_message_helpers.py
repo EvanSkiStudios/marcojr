@@ -73,10 +73,13 @@ async def message_history_cache(client, message):
 
     def build_user_prompt(author, nick, content, reply_to=None):
         """Helper to format user messages (with optional reply)."""
+        if reply_to == client.user.name:
+            reply_to = None
+
         if reply_to:
             return {
                 "role": "user",
-                "content": f'{author} ({nick}) (Replying to: {reply_to}): "{content}"'
+                "content": f'{author} ({nick}): (Replying to: {reply_to}) "{content}"'
             }
         return {"role": "user", "content": f'{author} ({nick}): "{content}"'}
 
@@ -102,7 +105,18 @@ async def message_history_cache(client, message):
 
         # Reply message
         if msg.type == discord.MessageType.reply and msg.reference:
-            referenced = await msg.channel.fetch_message(msg.reference.message_id)
+            try:
+                referenced = await msg.channel.fetch_message(msg.reference.message_id)
+            except discord.NotFound:
+                referenced = None  # message was deleted
+            except discord.Forbidden:
+                referenced = None  # missing permissions
+            except discord.HTTPException:
+                referenced = None  # network or other fetch error
+
+            if referenced is None:
+                return []
+
             prompts = [
                 build_user_prompt(author_name, author_nick, content, referenced.author.name)
             ]

@@ -58,7 +58,7 @@ Do not respond to the message. Only respond as instructed.
 Always provide a instructed response.
 """)
 
-emoji_llm = 'huihui_ai/llama3.2-abliterate'
+emoji_llm = 'llama3.2'
 
 system_prompt = dictation_rules
 
